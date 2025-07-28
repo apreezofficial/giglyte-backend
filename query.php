@@ -2,134 +2,189 @@
 require_once "db_connect.php";
 
 try {
-    // Users table
+    $conn->beginTransaction();
+
+    // USERS TABLE
     $conn->exec("
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50) NOT NULL UNIQUE,
             email VARCHAR(100) NOT NULL UNIQUE,
             password VARCHAR(255) NOT NULL,
-            role ENUM('buyer', 'seller', 'admin') DEFAULT 'buyer',
+            role ENUM('client','freelancer','admin') DEFAULT 'client',
             full_name VARCHAR(100),
-            bio TEXT,
+            phone VARCHAR(20),
+            country VARCHAR(50),
+            city VARCHAR(50),
+            address VARCHAR(255),
             profile_image VARCHAR(255),
-            rating DECIMAL(2,1) DEFAULT 0.0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            bio TEXT,
+            rating DECIMAL(3,2) DEFAULT 0.00,
+            total_reviews INT DEFAULT 0,
+            balance DECIMAL(10,2) DEFAULT 0.00,
+            is_verified BOOLEAN DEFAULT 0,
+            last_seen TIMESTAMP NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     ");
-
-    // Categories table
-    $conn->exec("
-        CREATE TABLE IF NOT EXISTS categories (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100) UNIQUE NOT NULL
-        )
-    ");
-
 $conn->exec("
-CREATE TABLE temp_users (
+  CREATE TABLE IF NOT EXISTS job_skills (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    token VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-");
-    // Gigs table
+    job_id INT NOT NULL,
+    skill VARCHAR(50),
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+")
+);
+    // FREELANCER PROFILE
     $conn->exec("
-        CREATE TABLE IF NOT EXISTS gigs (
+        CREATE TABLE IF NOT EXISTS freelancer_profiles (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            seller_id INT NOT NULL,
-            title VARCHAR(150) NOT NULL,
+            user_id INT NOT NULL,
+            title VARCHAR(100),
+            hourly_rate DECIMAL(10,2) DEFAULT 0.00,
+            skills TEXT,
+            experience_level ENUM('beginner','intermediate','expert') DEFAULT 'beginner',
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
+
+    // PORTFOLIO
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS portfolios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            freelancer_id INT NOT NULL,
+            title VARCHAR(100) NOT NULL,
+            description TEXT,
+            file_url VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (freelancer_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
+
+    // JOBS
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS jobs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            client_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
             description TEXT NOT NULL,
-            category_id INT NOT NULL,
-            price DECIMAL(10,2) NOT NULL,
-            delivery_time INT NOT NULL,
-            thumbnail VARCHAR(255),
-            status ENUM('active', 'paused', 'deleted') DEFAULT 'active',
+            budget DECIMAL(10,2) DEFAULT 0.00,
+            status ENUM('open','in_progress','completed','cancelled') DEFAULT 'open',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (seller_id) REFERENCES users(id),
-            FOREIGN KEY (category_id) REFERENCES categories(id)
+            FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ");
 
-    // Orders table
+    // PROPOSALS
     $conn->exec("
-        CREATE TABLE IF NOT EXISTS orders (
+        CREATE TABLE IF NOT EXISTS proposals (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            buyer_id INT NOT NULL,
-            gig_id INT NOT NULL,
-            seller_id INT NOT NULL,
-            amount DECIMAL(10,2) NOT NULL,
-            status ENUM('pending', 'active', 'delivered', 'completed', 'cancelled') DEFAULT 'pending',
-            requirements TEXT,
-            delivery_file VARCHAR(255),
+            job_id INT NOT NULL,
+            freelancer_id INT NOT NULL,
+            cover_letter TEXT,
+            proposed_amount DECIMAL(10,2),
+            estimated_days INT,
+            status ENUM('pending','accepted','rejected') DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (buyer_id) REFERENCES users(id),
-            FOREIGN KEY (gig_id) REFERENCES gigs(id),
-            FOREIGN KEY (seller_id) REFERENCES users(id)
+            FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+            FOREIGN KEY (freelancer_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ");
 
-    // Messages table
+    // CONTRACTS
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS contracts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            proposal_id INT NOT NULL,
+            client_id INT NOT NULL,
+            freelancer_id INT NOT NULL,
+            agreed_amount DECIMAL(10,2),
+            status ENUM('active','completed','cancelled') DEFAULT 'active',
+            start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            end_date TIMESTAMP NULL,
+            FOREIGN KEY (proposal_id) REFERENCES proposals(id),
+            FOREIGN KEY (client_id) REFERENCES users(id),
+            FOREIGN KEY (freelancer_id) REFERENCES users(id)
+        )
+    ");
+
+    // PAYMENTS
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS payments (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            contract_id INT NOT NULL,
+            transaction_id VARCHAR(100) NOT NULL UNIQUE,
+            amount DECIMAL(10,2) NOT NULL,
+            method ENUM('paypal','stripe','bank') DEFAULT 'paypal',
+            status ENUM('pending','completed','failed') DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (contract_id) REFERENCES contracts(id)
+        )
+    ");
+
+    // TRANSACTIONS (Wallet)
+    $conn->exec("
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            type ENUM('credit','debit') NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            description VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ");
+
+    // MESSAGES
     $conn->exec("
         CREATE TABLE IF NOT EXISTS messages (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT NOT NULL,
             sender_id INT NOT NULL,
             receiver_id INT NOT NULL,
+            contract_id INT,
             message TEXT NOT NULL,
             attachment VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (order_id) REFERENCES orders(id),
             FOREIGN KEY (sender_id) REFERENCES users(id),
-            FOREIGN KEY (receiver_id) REFERENCES users(id)
+            FOREIGN KEY (receiver_id) REFERENCES users(id),
+            FOREIGN KEY (contract_id) REFERENCES contracts(id)
         )
     ");
 
-    // Reviews table
+    // REVIEWS
     $conn->exec("
         CREATE TABLE IF NOT EXISTS reviews (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT NOT NULL,
+            contract_id INT NOT NULL,
             reviewer_id INT NOT NULL,
             reviewee_id INT NOT NULL,
             rating DECIMAL(2,1) NOT NULL CHECK (rating >= 0 AND rating <= 5),
             comment TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (order_id) REFERENCES orders(id),
+            FOREIGN KEY (contract_id) REFERENCES contracts(id),
             FOREIGN KEY (reviewer_id) REFERENCES users(id),
             FOREIGN KEY (reviewee_id) REFERENCES users(id)
         )
     ");
 
-    // Payments table
+    // NOTIFICATIONS
     $conn->exec("
-        CREATE TABLE IF NOT EXISTS payments (
+        CREATE TABLE IF NOT EXISTS notifications (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT NOT NULL,
-            transaction_id VARCHAR(100) NOT NULL UNIQUE,
-            amount DECIMAL(10,2) NOT NULL,
-            method ENUM('paypal', 'stripe', 'bank') DEFAULT 'paypal',
-            status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+            user_id INT NOT NULL,
+            type VARCHAR(50),
+            message TEXT,
+            is_read BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (order_id) REFERENCES orders(id)
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ");
 
-    // Gig images table
-    $conn->exec("
-        CREATE TABLE IF NOT EXISTS gig_images (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            gig_id INT NOT NULL,
-            image_url VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (gig_id) REFERENCES gigs(id)
-        )
-    ");
-
-  //  echo "All tables created successfully!";
+    $conn->commit();
+    echo 'All tables created successfully!';
 } catch (PDOException $e) {
-    echo "Error creating tables: " . $e->getMessage();
+    $conn->rollBack();
+    echo 'Error creating tables: ' . $e->getMessage();
 }
 ?>
