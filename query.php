@@ -26,6 +26,15 @@ try {
         )
     ");
 
+$conn->exec("
+CREATE TABLE temp_users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    token VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+");
     // Gigs table
     $conn->exec("
         CREATE TABLE IF NOT EXISTS gigs (
