@@ -17,9 +17,8 @@ try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST')
                 sendResponse(405, 'error', 'Method not allowed');
 
-            $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-            $password = trim($_POST['password']);
-
+            $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+$password = trim($_POST['password'] ?? '');
             if (!filter_var($email, FILTER_VALIDATE_EMAIL))
                 sendResponse(400, 'error', 'Invalid email format');
             if (strlen($password) < 6)
