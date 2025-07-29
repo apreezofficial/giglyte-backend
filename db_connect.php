@@ -1,8 +1,8 @@
 <?php
-$host = "localhost";
+$host = "0.0.0.0";
 $dbname = "giglyte";
 $username = "root";   
-$password = "";       
+$password = "root";       
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);

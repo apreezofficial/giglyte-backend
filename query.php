@@ -28,14 +28,6 @@ try {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     ");
-$conn->exec("
-  CREATE TABLE IF NOT EXISTS job_skills (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    job_id INT NOT NULL,
-    skill VARCHAR(50),
-    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
-")
-);
     // FREELANCER PROFILE
     $conn->exec("
         CREATE TABLE IF NOT EXISTS freelancer_profiles (
@@ -76,6 +68,14 @@ $conn->exec("
         )
     ");
 
+    //Jobs Skills requirements
+    $conn->exec("
+  CREATE TABLE IF NOT EXISTS job_skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    skill VARCHAR(50),
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE)
+");
     // PROPOSALS
     $conn->exec("
         CREATE TABLE IF NOT EXISTS proposals (
@@ -182,9 +182,11 @@ $conn->exec("
     ");
 
     $conn->commit();
-    echo 'All tables created successfully!';
+   // echo 'All tables created successfully!';
 } catch (PDOException $e) {
-    $conn->rollBack();
-    echo 'Error creating tables: ' . $e->getMessage();
+    if ($conn->inTransaction()) {
+        $conn->rollBack();
+    }
+  //  echo 'Error creating tables: ' . $e->getMessage();
 }
 ?>
