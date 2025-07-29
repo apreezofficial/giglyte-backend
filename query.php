@@ -91,7 +91,25 @@ try {
             FOREIGN KEY (freelancer_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ");
-
+$conn->exec("
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    proposal_id INT NOT NULL,
+    client_id INT NOT NULL,
+    freelancer_id INT NOT NULL,
+ delivery_message TEXT NULL,
+ delivery_file VARCHAR(255) NULL,
+ delivered_at DATETIME NULL;
+    status ENUM('in_progress','completed','cancelled') DEFAULT 'in_progress',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (job_id) REFERENCES jobs(id),
+    FOREIGN KEY (proposal_id) REFERENCES proposals(id),
+    FOREIGN KEY (client_id) REFERENCES users(id),
+    FOREIGN KEY (freelancer_id) REFERENCES users(id)
+)
+");
     // CONTRACTS
     $conn->exec("
         CREATE TABLE IF NOT EXISTS contracts (
@@ -138,20 +156,20 @@ try {
 
     // MESSAGES
     $conn->exec("
-        CREATE TABLE IF NOT EXISTS messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            sender_id INT NOT NULL,
-            receiver_id INT NOT NULL,
-            contract_id INT,
-            message TEXT NOT NULL,
-            attachment VARCHAR(255),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (sender_id) REFERENCES users(id),
-            FOREIGN KEY (receiver_id) REFERENCES users(id),
-            FOREIGN KEY (contract_id) REFERENCES contracts(id)
-        )
+        CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     last_active DATETIME DEFAULT NULL,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    is_read TINYINT(1) DEFAULT 0;
+)
     ");
-
     // REVIEWS
     $conn->exec("
         CREATE TABLE IF NOT EXISTS reviews (

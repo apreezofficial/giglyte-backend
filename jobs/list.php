@@ -18,7 +18,7 @@ $stmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user || $user['role'] !== 'freelancer') {
+if (!$user) {
     sendResponse(403, 'error', 'Only freelancers can view jobs');
 }
 
