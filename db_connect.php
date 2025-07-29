@@ -3,7 +3,7 @@ $host = "0.0.0.0";
 $dbname = "giglyte";
 $username = "root";   
 $password = "root";       
-
+error_reporting(0);
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
   
