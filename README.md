@@ -1,77 +1,75 @@
-# 💡 GigLyte API: The Freelance Connection Backend
+# GigLyte Freelance Platform API 🛠️
 
 ## Overview
-GigLyte API is a robust backend system developed in **PHP** leveraging **PDO** for database interactions with **MySQL**. It powers a dynamic freelance platform, connecting clients with skilled freelancers for various job engagements.
+GigLyte is a robust backend API for a freelance platform, enabling seamless interaction between clients and freelancers. Built with PHP, it leverages native PDO for MySQL database interactions, Firebase JWT for secure authentication, and a modular architecture for managing jobs, proposals, orders, messaging, and user wallets.
 
 ## Features
-- ✨ **User Management**: Secure user registration (multi-step verification) and authentication.
-- 💼 **Job Board**: Clients can create, manage, and delete job listings with detailed descriptions and skill requirements.
-- ✍️ **Proposal System**: Freelancers can submit proposals to open jobs, detailing their offers and estimated delivery times.
-- 🤝 **Order & Contract Management**: Clients can accept proposals, initiating orders and tracking project progress.
-- 💬 **Real-time Messaging**: Integrated communication system for clients and freelancers to discuss project details.
-- 📤 **Work Submission**: Freelancers can submit completed work, with options for file uploads.
-- 🔄 **Order Status Updates**: Clients and freelancers can update order statuses throughout the project lifecycle.
-- 🔐 **Secure Authentication**: Utilizes PHP Sessions for managing user state after login, with JWT generation for potential future stateless API usage.
-- 📊 **Database Schema Management**: Automated database table creation and updates on startup via `query.php`.
+-   **User Management**: Secure multi-step user registration (client/freelancer) and authentication with JWT.
+-   **Job Management**: Clients can create, list, view, edit, and delete job postings with specific requirements and budgets.
+-   **Proposal System**: Freelancers can browse open jobs, submit detailed proposals, and clients can review and accept proposals.
+-   **Order Fulfillment**: Facilitates job progression from proposal acceptance to work submission, delivery review, and order completion.
+-   **Real-time Messaging**: Integrated messaging system for direct communication between clients and freelancers on specific job orders.
+-   **Wallet System**: Manages user balances and tracks transaction history.
+-   **Data Persistence**: Structured MySQL database schema for all platform entities.
+
+## Technologies Used
+
+| Category        | Technology                                                                                                                                              | Purpose                                        |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------- |
+| **Backend**     | [PHP 8.3+](https://www.php.net/)                                                                                                                        | Core scripting language                        |
+| **Database**    | [MySQL](https://www.mysql.com/)                                                                                                                         | Relational database for all platform data      |
+| **DB Access**   | [PDO (PHP Data Objects)](https://www.php.net/manual/en/book.pdo.php)                                                                                    | Database abstraction layer                     |
+| **Auth**        | [Firebase/PHP-JWT](https://github.com/firebase/php-jwt)                                                                                                 | JSON Web Token implementation for authentication |
+| **Environment** | [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv)                                                                                                 | Loading environment variables from `.env` file |
 
 ## Getting Started
 
 ### Environment Variables
-The following environment variables are required for the application to run correctly. It is recommended to create a `.env` file in the project root and load these variables.
+To run this project, you will need to configure the following environment variables:
 
-| Variable Name   | Example Value                       | Description                               |
-| :-------------- | :---------------------------------- | :---------------------------------------- |
-| `JWT_SECRET`    | `your_super_secret_jwt_key_here`    | Secret key for JWT encoding/decoding.     |
-| `DB_HOST`       | `localhost` or `127.0.0.1`          | Database host address.                    |
-| `DB_NAME`       | `giglyte`                           | Name of the MySQL database.               |
-| `DB_USER`       | `root`                              | Username for database access.             |
-| `DB_PASS`       | `password`                          | Password for database access.             |
+| Variable      | Example Value                                  | Description                                                                                                                                                                         |
+| :------------ | :--------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `JWT_SECRET`  | `your_super_secret_jwt_key_here_12345`         | A strong, random key used for signing and verifying JSON Web Tokens. **CRITICAL for security; change from default.**                                                                |
+| `DB_HOST`     | `localhost` or `127.0.0.1`                     | Database host. (Currently hardcoded in `db_connect.php`, but recommended for .env)                                                                                                 |
+| `DB_NAME`     | `giglyte`                                      | Database name. (Currently hardcoded in `db_connect.php`, but recommended for .env)                                                                                                 |
+| `DB_USER`     | `root`                                         | Database username. (Currently hardcoded in `db_connect.php`, but recommended for .env)                                                                                             |
+| `DB_PASSWORD` | `your_db_password` or `root` (for local dev)   | Database password. (Currently hardcoded in `db_connect.php`, but recommended for .env)                                                                                             |
 
-**Note:** The current `db_connect.php` hardcodes database credentials. For production, these should be loaded from environment variables using `getenv()` similar to `JWT_SECRET` for enhanced security and flexibility.
+Create a `.env` file in the project root directory and populate it with these variables.
 
-## Usage
-This backend provides a comprehensive set of API endpoints to manage a freelance marketplace.
+```env
+JWT_SECRET="your_super_secret_jwt_key_here_12345"
+DB_HOST="localhost"
+DB_NAME="giglyte"
+DB_USER="root"
+DB_PASSWORD="your_db_password"
+```
 
-### Authentication Flow
-1.  **Register as a User (Step 1)**: Send a POST request to `/signup.php?step=one` with your email and password. This creates a temporary user and provides a token for the next step.
-2.  **Verify Email (Step 2)**: Use the token received in Step 1 to send a GET request to `/signup.php?step=two`. This verifies the email and prepares for the final registration step.
-3.  **Complete Registration (Step 3)**: With the verified session, send a POST request to `/signup.php?step=three` to provide full name, username, and role, finalizing the account creation.
-4.  **Login**: Once registered, send a POST request to `/login.php` with your email and password. A successful login will return user details and establish a PHP session, which is used for subsequent authenticated requests.
+### Database Setup
+The `query.php` script is designed to initialize the entire database schema.
+**Note:** Ensure your MySQL server is running and the database user has sufficient privileges to create tables.
 
-### Job Management (Clients)
-As a client, you can:
--   **Create Jobs**: Post new job opportunities, specifying title, description, budget, and required skills.
--   **Manage Jobs**: Edit details of your existing job listings or delete them if no longer needed.
--   **View Proposals**: Browse all proposals submitted by freelancers for your open jobs.
--   **Accept Proposals**: Accept a suitable proposal, which initiates an order for the job.
-
-### Freelancer Operations
-As a freelancer, you can:
--   **List Jobs**: View all open job opportunities posted by clients.
--   **Apply to Jobs**: Submit a proposal with a cover letter, proposed amount, and estimated days for open jobs.
--   **View Orders**: See all ongoing and completed orders where you are the assigned freelancer.
--   **Submit Work**: Deliver completed work for an accepted order, including a message and optional file upload.
-
-### Communication & Order Tracking
--   **Send Messages**: Communicate with the client or freelancer involved in a specific job/order.
--   **Get Messages**: Retrieve the conversation history for a particular job.
--   **Update Order Status**: Both clients and freelancers can update the status of an order (e.g., 'in_progress', 'completed', 'cancelled') following specific role-based rules.
+1.  **Create Database:** Manually create an empty database named `giglyte` (or whatever you configure in `db_connect.php`).
+    ```sql
+    CREATE DATABASE giglyte;
+    USE giglyte;
+    ```
+2.  **Run Schema Initialization:** Access `query.php` via your web server (e.g., `http://localhost/path/to/query.php`). This will create all necessary tables.
 
 ## API Documentation
-### Base URL
-The API endpoints are located at the root of your server deployment (e.g., `http://localhost/` or `https://api.yourdomain.com/`).
 
-All authenticated endpoints require an active PHP session. After a successful login, the session is managed automatically by your browser. For API clients, ensure your HTTP client is configured to handle cookies for session management.
+### Base URL
+The API endpoints are directly accessible PHP files within the project's web root. For example, if your project is served from `http://localhost/giglyte/`, then the login endpoint would be `http://localhost/giglyte/login.php`.
 
 ### Endpoints
 
-#### POST /login.php
-Authenticates a user and establishes a session.
+#### `POST /login.php`
+Authenticates a user and returns a JWT token for subsequent API calls.
 **Request**:
 ```json
 {
-  "email": "string",
-  "password": "string"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 **Response**:
@@ -79,27 +77,29 @@ Authenticates a user and establishes a session.
 {
   "status": "success",
   "message": "Login successful",
-  "token": "jwt_token_string",
-  "user": {
-    "id": 1,
-    "username": "johndoe",
-    "email": "john.doe@example.com",
-    "role": "client"
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "username": "johndoe",
+      "email": "john.doe@example.com",
+      "role": "client"
+    }
   }
 }
 ```
 **Errors**:
-- `405`: Method not allowed
-- `400`: Invalid email format or password is required
-- `401`: Invalid email or password
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Invalid email format or missing password.
+-   `401 Unauthorized`: Invalid email or password.
 
-#### POST /signup.php?step=one
-Initiates user registration by validating email and password. Creates a temporary user record.
+#### `POST /signup.php?step=one`
+Initiates user registration by validating email and password, creating a temporary user, and returning a verification token.
 **Request**:
 ```json
 {
-  "email": "string",
-  "password": "string"
+  "email": "newuser@example.com",
+  "password": "StrongPassword123"
 }
 ```
 **Response**:
@@ -107,19 +107,24 @@ Initiates user registration by validating email and password. Creates a temporar
 {
   "status": "success",
   "message": "Step 1 complete, verify email",
-  "token": "verification_token_string"
+  "data": {
+    "token": "123456"
+  }
 }
 ```
 **Errors**:
-- `405`: Method not allowed
-- `400`: Invalid email format or password too short (min 6 characters)
-- `409`: Email already registered
-- `500`: Database error
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Invalid email format or password too short (min 6 characters).
+-   `409 Conflict`: Email already registered.
 
-#### GET /signup.php?step=two
-Verifies the email using the provided token from step one.
+#### `POST /signup.php?step=two`
+Verifies the email using the token received in step one.
 **Request**:
-Query Parameter: `token` (e.g., `/signup.php?step=two&token=your_verification_token`)
+```json
+{
+  "code": "123456"
+}
+```
 **Response**:
 ```json
 {
@@ -128,22 +133,21 @@ Query Parameter: `token` (e.g., `/signup.php?step=two&token=your_verification_to
 }
 ```
 **Errors**:
-- `400`: Token required
-- `404`: Invalid or expired token
-- `500`: Database error
+-   `400 Bad Request`: Missing verification code.
+-   `404 Not Found`: Invalid or expired token.
 
-#### POST /signup.php?step=three
-Completes the user registration with personal details.
+#### `POST /signup.php?step=three`
+Completes user registration with personal details and assigns a role. Requires `temp_user_id` in session from `step=two`.
 **Request**:
 ```json
 {
-  "full_name": "string",
-  "username": "string",
-  "role": "client" | "freelancer",
-  "phone": "string" (optional),
-  "country": "string" (optional),
-  "city": "string" (optional),
-  "bio": "string" (optional)
+  "full_name": "Jane Doe",
+  "username": "janedoe",
+  "role": "freelancer",
+  "phone": "08012345678",
+  "country": "Nigeria",
+  "city": "Lagos",
+  "bio": "Experienced PHP developer."
 }
 ```
 **Response**:
@@ -154,47 +158,133 @@ Completes the user registration with personal details.
 }
 ```
 **Errors**:
-- `405`: Method not allowed
-- `400`: No user session found, or required fields (full_name, username, role) are missing
-- `409`: Username already taken
-- `404`: Temporary user not found
-- `500`: Database error
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Missing required fields (`full_name`, `username`, `role`).
+-   `409 Conflict`: Username already taken.
+-   `400 Bad Request`: No user session found (if `step=two` wasn't completed).
+-   `404 Not Found`: Temporary user not found.
+-   `500 Server Error`: Database error.
 
-#### POST /jobs/accept_proposal.php
-**Requires Client role.** Accepts a proposal for a job, creating an order.
+#### `POST /jobs/create.php`
+Allows authenticated clients to create a new job posting.
 **Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
 ```json
 {
-  "proposal_id": "integer"
+  "title": "Build a Custom E-commerce Website",
+  "description": "I need a full-stack developer to create a scalable e-commerce platform with payment gateway integration.",
+  "budget": 5000.00,
+  "skills": "PHP,Laravel,MySQL,Vue.js"
 }
 ```
 **Response**:
 ```json
 {
   "status": "success",
-  "message": "Proposal accepted and order created",
+  "message": "Job created successfully",
   "data": {
-    "order_id": 123
+    "job_id": 101,
+    "skills": ["PHP", "Laravel", "MySQL", "Vue.js"]
   }
 }
 ```
 **Errors**:
-- `401`: Unauthorized. Please log in.
-- `400`: Proposal ID required or Proposal already accepted
-- `404`: Proposal not found
-- `403`: Not authorized to accept this proposal
-- `500`: Could not create order (Database error)
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not a client.
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Missing title or description, or invalid budget.
 
-#### POST /jobs/apply.php
-**Requires Freelancer role.** Submits a proposal for an open job.
-*Note: `jobs/create_proposals.php` is functionally identical to this endpoint.*
+#### `GET /jobs/list.php`
+Retrieves a list of open job postings. Can be filtered by keyword, budget range, and specific skills.
 **Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```
+GET /jobs/list.php?search=developer&min_budget=100&max_budget=1000&skill=PHP
+```
+**Response**:
 ```json
 {
-  "job_id": "integer",
-  "cover_letter": "string",
-  "proposed_amount": "float",
-  "estimated_days": "integer"
+  "status": "success",
+  "message": "Jobs fetched successfully",
+  "data": {
+    "jobs": [
+      {
+        "id": 1,
+        "title": "Backend API Developer",
+        "description": "Develop a RESTful API for a new mobile application.",
+        "budget": "800.00",
+        "status": "open",
+        "created_at": "2023-10-26 10:00:00",
+        "client_name": "Alice Smith",
+        "skills": ["PHP", "API", "MySQL"]
+      }
+    ]
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not authorized to view jobs (currently restricted to freelancers).
+
+#### `POST /jobs/manage.php?action=edit`
+Allows authenticated clients to edit their existing job postings.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "job_id": 101,
+  "title": "Updated E-commerce Project",
+  "description": "Revised description for the e-commerce platform.",
+  "budget": 5500.00,
+  "skills": "PHP,MySQL,Vue.js,Stripe"
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Job updated successfully"
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not a client.
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Missing title or description.
+-   `404 Not Found`: Job not found or not owned by the client.
+
+#### `POST /jobs/manage.php?action=delete`
+Allows authenticated clients to delete their job postings.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "job_id": 101
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Job deleted successfully"
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not a client.
+-   `405 Method Not Allowed`: If not a POST request.
+-   `404 Not Found`: Job not found or not owned by the client.
+
+#### `POST /jobs/apply.php`
+Allows authenticated freelancers to submit a proposal for an open job.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "job_id": 1,
+  "cover_letter": "I have extensive experience in this area...",
+  "proposed_amount": 750.00,
+  "estimated_days": 7
 }
 ```
 **Response**:
@@ -205,46 +295,252 @@ Completes the user registration with personal details.
 }
 ```
 **Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only freelancers can apply to jobs
-- `405`: Method not allowed
-- `400`: All fields are required
-- `404`: Job not found or not open for proposals
-- `409`: You already applied to this job
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not a freelancer.
+-   `405 Method Not Allowed`: If not a POST request.
+-   `400 Bad Request`: Missing or invalid `job_id`, `cover_letter`, `proposed_amount`, or `estimated_days`.
+-   `404 Not Found`: Job not found or not open for proposals.
+-   `409 Conflict`: Freelancer has already applied to this job.
 
-#### POST /jobs/create.php
-**Requires Client role.** Creates a new job listing.
+#### `GET /jobs/view_proposals.php`
+Allows authenticated clients to view all proposals submitted for a specific job they posted.
 **Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```
+GET /jobs/view_proposals.php?job_id=1
+```
+**Response**:
 ```json
 {
-  "title": "string",
-  "description": "string",
-  "budget": "float",
-  "skills": "string" // comma-separated, e.g., "PHP,MySQL,Laravel"
+  "status": "success",
+  "message": "Proposals fetched successfully",
+  "data": {
+    "proposals": [
+      {
+        "proposal_id": 1,
+        "cover_letter": "I can deliver this project in 5 days...",
+        "proposed_amount": "900.00",
+        "estimated_days": 5,
+        "status": "pending",
+        "freelancer_id": 2,
+        "username": "janedoe",
+        "full_name": "Jane Doe",
+        "rating": "4.8",
+        "profile_image": null
+      }
+    ]
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User is not a client or does not own the job.
+-   `400 Bad Request`: Missing `job_id`.
+
+#### `POST /jobs/accept_proposal.php`
+Allows authenticated clients to accept a specific proposal for their job. This action also creates an order and marks the job as `in_progress`.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "proposal_id": 1
 }
 ```
 **Response**:
 ```json
 {
   "status": "success",
-  "message": "Job created successfully",
+  "message": "Proposal accepted and order created",
   "data": {
-    "job_id": 101,
-    "skills": ["PHP", "MySQL", "Laravel"]
+    "order_id": 1
   }
 }
 ```
 **Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only clients can create jobs
-- `405`: Method not allowed
-- `400`: Title and description are required or Invalid budget
-- `500`: Database error
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Missing or invalid `proposal_id`, or proposal already accepted.
+-   `404 Not Found`: Proposal not found.
+-   `403 Forbidden`: Not authorized to accept this proposal (not the job's client).
+-   `500 Server Error`: Database error during order creation.
 
-#### GET /jobs/get_messages.php
-**Requires participating in the job (client or accepted freelancer).** Retrieves all messages for a specific job.
+#### `GET /jobs/get_orders.php`
+Retrieves a list of orders associated with the authenticated user (either as a client or a freelancer).
 **Request**:
-Query Parameter: `job_id` (e.g., `/jobs/get_messages.php?job_id=101`)
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```
+GET /jobs/get_orders.php
+```
+**Response (as Client)**:
+```json
+{
+  "status": "success",
+  "message": "Orders fetched successfully",
+  "data": {
+    "orders": [
+      {
+        "order_id": 1,
+        "status": "in_progress",
+        "created_at": "2023-10-26 11:00:00",
+        "updated_at": "2023-10-26 11:00:00",
+        "job_title": "Backend API Developer",
+        "freelancer_username": "janedoe",
+        "freelancer_name": "Jane Doe"
+      }
+    ]
+  }
+}
+```
+**Response (as Freelancer)**:
+```json
+{
+  "status": "success",
+  "message": "Orders fetched successfully",
+  "data": {
+    "orders": [
+      {
+        "order_id": 1,
+        "status": "in_progress",
+        "created_at": "2023-10-26 11:00:00",
+        "updated_at": "2023-10-26 11:00:00",
+        "job_title": "Backend API Developer",
+        "client_username": "johndoe",
+        "client_name": "John Doe"
+      }
+    ]
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `403 Forbidden`: User not found.
+
+#### `POST /jobs/submit_work.php`
+Allows authenticated freelancers to submit completed work for an order.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "order_id": 1,
+  "delivery_message": "Final deliverables attached. Let me know if you need any revisions.",
+  "delivery_file": "<file_upload>"
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Work submitted successfully",
+  "data": {
+    "order_id": 1,
+    "message": "Final deliverables attached. Let me know if you need any revisions.",
+    "file": "uploads/deliveries/delivery_653a9b1c.pdf"
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Missing or invalid `order_id` or `delivery_message`. Order not in `in_progress` status.
+-   `404 Not Found`: Order not found.
+-   `403 Forbidden`: Not authorized to submit work for this order (not the freelancer).
+
+#### `POST /jobs/review_delivery.php`
+Allows authenticated clients to review delivered work and either accept it or request changes.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "order_id": 1,
+  "action": "accept",
+  "feedback": "Excellent work! Highly satisfied."
+}
+```
+OR for requesting changes:
+```json
+{
+  "order_id": 1,
+  "action": "request_changes",
+  "feedback": "Please adjust the styling on the homepage."
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Delivery review updated successfully",
+  "data": {
+    "order_id": 1,
+    "new_status": "completed",
+    "feedback": "Excellent work! Highly satisfied."
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Missing or invalid `order_id` or `action`. Order not in `delivered` state.
+-   `404 Not Found`: Order not found.
+-   `403 Forbidden`: Not authorized to review this order (not the client).
+
+#### `POST /jobs/update_order_status.php`
+Allows participants (client or freelancer) to update the status of an order. Specific role-based rules apply.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "order_id": 1,
+  "status": "completed"
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Order status updated",
+  "data": {
+    "order_id": 1,
+    "status": "completed"
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Invalid `order_id` or `status`.
+-   `404 Not Found`: Order not found.
+-   `403 Forbidden`: Not authorized to update this order (not a participant) or specific role-based restrictions (e.g., only client can cancel, only freelancer can mark completed).
+
+#### `POST /jobs/send_message.php`
+Sends a message between job participants (client and freelancer) for a specific job.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```json
+{
+  "job_id": 1,
+  "receiver_id": 2,
+  "message": "Can we discuss the project details tomorrow?"
+}
+```
+**Response**:
+```json
+{
+  "status": "success",
+  "message": "Message sent successfully",
+  "data": {
+    "message_id": 1
+  }
+}
+```
+**Errors**:
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Missing `job_id`, `receiver_id`, or `message`.
+-   `404 Not Found`: Job not found.
+-   `403 Forbidden`: Sender or receiver are not participants in the specified job.
+
+#### `GET /jobs/get_messages.php`
+Retrieves all messages for a specific job, marking messages sent to the authenticated user as read.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```
+GET /jobs/get_messages.php?job_id=1
+```
 **Response**:
 ```json
 {
@@ -256,274 +552,63 @@ Query Parameter: `job_id` (e.g., `/jobs/get_messages.php?job_id=101`)
         "id": 1,
         "sender_id": 1,
         "receiver_id": 2,
-        "message": "Hello, how are you?",
+        "message": "Hello, when can we start?",
         "is_read": 1,
-        "created_at": "2023-10-26 10:00:00",
-        "sender_name": "client_user",
-        "receiver_name": "freelancer_user"
+        "created_at": "2023-10-26 12:00:00",
+        "sender_name": "John Doe",
+        "receiver_name": "Jane Doe"
       }
     ]
   }
 }
 ```
 **Errors**:
-- `401`: Unauthorized. Please log in.
-- `400`: Job ID required
-- `404`: Job not found
-- `403`: Not authorized to view messages
+-   `401 Unauthorized`: Missing or invalid token.
+-   `400 Bad Request`: Missing `job_id`.
+-   `404 Not Found`: Job not found.
+-   `403 Forbidden`: Not authorized to view messages (not a job participant).
 
-#### GET /jobs/get_orders.php
-**Requires Client or Freelancer role.** Retrieves a list of orders relevant to the authenticated user.
-**Request**: None
+#### `GET /wallets/wallet_balance.php`
+Retrieves the authenticated user's wallet balance and transaction history.
+**Request**:
+**Headers**: `Authorization: Bearer <JWT_TOKEN>`
+```
+GET /wallets/wallet_balance.php
+```
 **Response**:
 ```json
 {
   "status": "success",
-  "message": "Orders fetched successfully",
+  "message": "Wallet fetched successfully",
   "data": {
-    "orders": [
+    "balance": "150.75",
+    "transactions": [
       {
-        "order_id": 1,
-        "status": "in_progress",
-        "created_at": "2023-10-26 09:00:00",
-        "updated_at": "2023-10-26 10:00:00",
-        "job_title": "Build a PHP API",
-        "freelancer_username": "dev_pro", // For client role
-        "freelancer_name": "Developer Pro" // For client role
+        "type": "credit",
+        "amount": "200.00",
+        "description": "Payment for Job #1",
+        "created_at": "2023-10-25 09:30:00"
       },
       {
-        "order_id": 2,
-        "status": "completed",
-        "created_at": "2023-10-20 09:00:00",
-        "updated_at": "2023-10-25 10:00:00",
-        "job_title": "Design a new logo",
-        "client_username": "design_buyer", // For freelancer role
-        "client_name": "Design Buyer Inc." // For freelancer role
+        "type": "debit",
+        "amount": "50.00",
+        "description": "Withdrawal",
+        "created_at": "2023-10-24 14:15:00"
       }
     ]
   }
 }
 ```
 **Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: User not found
-- `500`: Database error
-
-#### GET /jobs/list.php
-**Requires Freelancer role.** Lists all open job opportunities, with optional filtering.
-**Request**:
-Query Parameters:
-- `search`: Keyword to search in job title or description.
-- `min_budget`: Minimum budget for jobs.
-- `max_budget`: Maximum budget for jobs.
-- `skill`: Filter jobs by a specific required skill.
-
-Example: `/jobs/list.php?search=web&min_budget=100&skill=PHP`
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Jobs fetched successfully",
-  "data": {
-    "jobs": [
-      {
-        "id": 1,
-        "title": "Build a Laravel E-commerce site",
-        "description": "...",
-        "budget": "500.00",
-        "status": "open",
-        "created_at": "2023-10-26 08:00:00",
-        "client_name": "Client A",
-        "skills": ["Laravel", "Vue.js", "MySQL"]
-      }
-    ]
-  }
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only freelancers can view jobs
-- `500`: Database error
-
-#### POST /jobs/manage.php?action=edit
-**Requires Client role and job ownership.** Edits an existing job listing.
-**Request**:
-```json
-{
-  "job_id": "integer",
-  "title": "string",
-  "description": "string",
-  "budget": "float",
-  "skills": "string" // comma-separated, will overwrite existing skills
-}
-```
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Job updated successfully"
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only clients can manage jobs
-- `405`: Method not allowed
-- `400`: Title and description are required
-- `404`: Job not found or not owned by you
-- `500`: Database error
-
-#### POST /jobs/manage.php?action=delete
-**Requires Client role and job ownership.** Deletes a job listing.
-**Request**:
-```json
-{
-  "job_id": "integer"
-}
-```
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Job deleted successfully"
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only clients can manage jobs
-- `405`: Method not allowed
-- `404`: Job not found or not owned by you
-- `500`: Database error
-
-#### POST /jobs/send_message.php
-**Requires participating in the job (client or accepted freelancer).** Sends a new message within a job's chat.
-**Request**:
-```json
-{
-  "job_id": "integer",
-  "receiver_id": "integer",
-  "message": "string"
-}
-```
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Message sent successfully",
-  "data": {
-    "message_id": 456
-  }
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `400`: All fields are required
-- `404`: Job not found
-- `403`: You are not authorized to send message on this job
-
-#### POST /jobs/submit_work.php
-**Requires Freelancer role and order ownership.** Submits completed work for an order.
-**Request**:
-```json
-{
-  "order_id": "integer",
-  "delivery_message": "string",
-  "delivery_file": "file" (optional, multipart/form-data)
-}
-```
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Work submitted successfully",
-  "data": {
-    "order_id": 123,
-    "message": "Here is the completed work!",
-    "file": "uploads/deliveries/delivery_xxxxxxxx.pdf" // Null if no file
-  }
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `400`: Order ID and delivery message are required or Order not in progress
-- `404`: Order not found
-- `403`: Not your order
-
-#### POST /jobs/update_order_status.php
-**Requires participating in the order (client or freelancer).** Updates the status of an order.
-**Request**:
-```json
-{
-  "order_id": "integer",
-  "status": "in_progress" | "completed" | "cancelled"
-}
-```
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Order status updated",
-  "data": {
-    "order_id": 123,
-    "status": "completed"
-  }
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `400`: Invalid order ID or status
-- `404`: Order not found
-- `403`: Not authorized to update this order (due to role or non-participation), or specific role rules violated (e.g., only client can cancel)
-
-#### GET /jobs/view_proposals.php
-**Requires Client role and job ownership.** Retrieves all proposals for a specific job.
-**Request**:
-Query Parameter: `job_id` (e.g., `/jobs/view_proposals.php?job_id=101`)
-**Response**:
-```json
-{
-  "status": "success",
-  "message": "Proposals fetched successfully",
-  "data": {
-    "proposals": [
-      {
-        "proposal_id": 1,
-        "cover_letter": "I can complete this job in...",
-        "proposed_amount": "450.00",
-        "estimated_days": 5,
-        "status": "pending",
-        "freelancer_id": 2,
-        "username": "freelancer_dev",
-        "full_name": "Freelancer Developer",
-        "rating": "4.80",
-        "profile_image": null
-      }
-    ]
-  }
-}
-```
-**Errors**:
-- `401`: Unauthorized. Please log in.
-- `403`: Only clients can view proposals or You are not authorized to view proposals for this job
-- `400`: Job ID required
-
-## Technologies Used
-
-| Technology    | Category                 | Description                                                 |
-| :------------ | :----------------------- | :---------------------------------------------------------- |
-| **PHP**       | Backend Language         | Core programming language for the API logic.                |
-| **MySQL**     | Database                 | Relational database for persistent storage.                 |
-| **PDO**       | Database Abstraction     | PHP Data Objects for secure and efficient database access.  |
-| **Composer**  | Dependency Manager       | Manages PHP libraries and dependencies.                     |
-| **Firebase JWT**| Authentication Library   | For generating and validating JSON Web Tokens.              |
-| **phpdotenv** | Environment Management   | Loads environment variables from a `.env` file.             |
+-   `401 Unauthorized`: Missing or invalid token.
 
 ## License
-This project is licensed under the MIT License.
+This project is not currently covered by an open-source license. Please contact the author for licensing inquiries.
 
-## Author Info
-- **Developer**: [Your Name/Alias Here]
-- **LinkedIn**: [Your LinkedIn Profile URL]
-- **Portfolio**: [Your Personal Website/Portfolio URL]
+## Author
+**[Your Name]** 👨‍💻
+- **LinkedIn**: [Your LinkedIn Profile]
+- **Portfolio**: [Your Personal Portfolio/Website]
 - **Email**: [Your Email Address]
 
 ---
