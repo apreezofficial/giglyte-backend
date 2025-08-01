@@ -22,8 +22,8 @@ try {
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$user || $user['role'] !== 'client') {
-        sendResponse(403, 'error', 'Only clients can create jobs');
+    if (!$user) {
+        sendResponse(403, 'error', 'Only Users can create jobs');
     }
 
     // --- Check method ---
@@ -62,7 +62,7 @@ try {
         }
     }
 
-    sendResponse(201, 'success', 'Job created successfully', [
+    sendResponse(200, 'success', 'Job created successfully', [
         'job_id' => $jobId,
         'skills' => $addedSkills
     ]);

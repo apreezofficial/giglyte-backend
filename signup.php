@@ -41,11 +41,11 @@ $password = trim($_POST['password'] ?? '');
             sendResponse(200, 'success', 'Step 1 complete, verify email', ['token' => $token]);
             break;
         case 'two':
-            $token = $_GET['token'] ?? '';
-            if (empty($token)) sendResponse(400, 'error', 'Token required');
+            $code = $_POST['code'] ?? '';
+            if (empty($code)) sendResponse(400, 'error', 'Code required');
 
             $stmt = $conn->prepare("SELECT * FROM temp_users WHERE token = ?");
-            $stmt->execute([$token]);
+            $stmt->execute([$code]);
             $tempUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$tempUser)
@@ -107,7 +107,7 @@ $password = trim($_POST['password'] ?? '');
             $conn->commit();
             unset($_SESSION['temp_user_id']);
 
-            sendResponse(201, 'success', 'Signup complete, you can login now');
+            sendResponse(200, 'success', 'Signup complete, you can login now');
             break;
 
         default:

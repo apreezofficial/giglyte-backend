@@ -23,7 +23,7 @@ $stmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user || $user['role'] !== 'freelancer') {
+if (!$user) {
     sendResponse(403, 'error', 'Only freelancers can apply to jobs');
 }
 
@@ -32,10 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(405, 'error', 'Method not allowed');
 }
 
-$jobId = intval($_POST['job_id'] ?? 0);
-$coverLetter = trim($_POST['cover_letter'] ?? '');
-$proposedAmount = floatval($_POST['proposed_amount'] ?? 0);
-$estimatedDays = intval($_POST['estimated_days'] ?? 0);
+if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $jobId = intval($data['job_id'] ?? 0);
+    $coverLetter = trim($data['cover_letter'] ?? '');
+    $proposedAmount = floatval($data['proposed_amount'] ?? 0);
+    $estimatedDays = intval($data['estimated_days'] ?? 0);
+} else {
+    $jobId = intval($_POST['job_id'] ?? 0);
+    $coverLetter = trim($_POST['cover_letter'] ?? '');
+    $proposedAmount = floatval($_POST['proposed_amount'] ?? 0);
+    $estimatedDays = intval($_POST['estimated_days'] ?? 0);
+}
 
 if ($jobId <= 0 || empty($coverLetter) || $proposedAmount <= 0 || $estimatedDays <= 0) {
     sendResponse(400, 'error', 'All fields are required');
@@ -64,5 +72,5 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$jobId, $userId, $coverLetter, $proposedAmount, $estimatedDays]);
 
-sendResponse(201, 'success', 'Proposal submitted successfully');
+sendResponse(200, 'success', 'Proposal submitted successfully');
 ?>
