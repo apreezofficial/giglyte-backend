@@ -4,7 +4,11 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 
+header("Access-Control-Allow-Origin: http://localhost:8080");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header('Content-Type: application/json');
+session_start();
 
 function sendResponse($statusCode, $status, $message, $data = []) {
     http_response_code($statusCode);
@@ -37,6 +41,13 @@ if (!$user || !password_verify($password, $user['password'])) {
     sendResponse(401, 'error', 'Invalid email or password');
 }
 
+// ---- STORE SESSION ----
+$_SESSION['user_id'] = $user['id'];
+$_SESSION['username'] = $user['username'];
+$_SESSION['email'] = $user['email'];
+$_SESSION['role'] = $user['role'];
+
+// ---- JWT (optional for APIs) ----
 $payload = [
     'iss' => $_SERVER['HTTP_HOST'],
     'aud' => $_SERVER['HTTP_HOST'],
@@ -45,7 +56,6 @@ $payload = [
     'user_id' => $user['id'],
     'role' => $user['role']
 ];
-
 $jwt = JWT::encode($payload, $secretKey, 'HS256');
 
 sendResponse(200, 'success', 'Login successful', [

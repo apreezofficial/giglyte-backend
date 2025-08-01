@@ -2,7 +2,9 @@
 require_once "db_connect.php";
 session_start();
 header('Content-Type: application/json');
-
+header("Access-Control-Allow-Origin: http://localhost:8080");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 function sendResponse($statusCode, $status, $message, $data = []) {
     http_response_code($statusCode);
     echo json_encode(['status' => $status, 'message' => $message, 'data' => $data]);

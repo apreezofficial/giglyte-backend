@@ -2,7 +2,9 @@
 require_once "db_connect.php";
 session_start();
 header('Content-Type: application/json');
-
+header("Access-Control-Allow-Origin: http://localhost:8080");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 $step = $_GET['step'] ?? 'one';
 
 function sendResponse($statusCode, $status, $message, $data = []) {
@@ -30,7 +32,7 @@ $password = trim($_POST['password'] ?? '');
             if ($stmt->rowCount() > 0)
                 sendResponse(409, 'error', 'Email already registered');
 
-            $token = bin2hex(random_bytes(16));
+            $token = rand(111111, 999999);
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
             $stmt = $conn->prepare("INSERT INTO temp_users (email, password, token) VALUES (?, ?, ?)");
