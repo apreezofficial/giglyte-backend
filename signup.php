@@ -9,7 +9,11 @@ $step = $_GET['step'] ?? 'one';
 
 function sendResponse($statusCode, $status, $message, $data = []) {
     http_response_code($statusCode);
-    echo json_encode(array_merge(['status' => $status, 'message' => $message], $data));
+    $response = ['status' => $status, 'message' => $message];
+    if (!empty($data)) {
+        $response['data'] = $data;
+    }
+    echo json_encode($response);
     exit;
 }
 
@@ -20,7 +24,7 @@ try {
                 sendResponse(405, 'error', 'Method not allowed');
 
             $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
-$password = trim($_POST['password'] ?? '');
+            $password = trim($_POST['password'] ?? '');
             if (!filter_var($email, FILTER_VALIDATE_EMAIL))
                 sendResponse(400, 'error', 'Invalid email format');
             if (strlen($password) < 6)
@@ -35,11 +39,12 @@ $password = trim($_POST['password'] ?? '');
             $token = rand(111111, 999999);
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-            $stmt = $conn->prepare("INSERT INTO temp_users (email, password, token) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO temp_users (email, password, token, verified) VALUES (?, ?, ?, 0)");
             $stmt->execute([$email, $hashedPassword, $token]);
 
             sendResponse(200, 'success', 'Step 1 complete, verify email', ['token' => $token]);
             break;
+            
         case 'two':
             $code = $_POST['code'] ?? '';
             if (empty($code)) sendResponse(400, 'error', 'Code required');
@@ -51,12 +56,25 @@ $password = trim($_POST['password'] ?? '');
             if (!$tempUser)
                 sendResponse(404, 'error', 'Invalid or expired token');
 
-            $_SESSION['temp_user_id'] = $tempUser['id'];
+            // Mark the user as verified in the database instead of using sessions
+            $stmt = $conn->prepare("UPDATE temp_users SET verified = 1 WHERE token = ?");
+            $stmt->execute([$code]);
+            
             sendResponse(200, 'success', 'Email verified, proceed to next step');
             break;
+            
         case 'three':
-            if (!isset($_SESSION['temp_user_id']))
-                sendResponse(400, 'error', 'No user session found, restart signup');
+            // Get the verification code from the request body
+            $code = $_POST['code'] ?? '';
+            if (empty($code)) sendResponse(400, 'error', 'Verification code required');
+
+            // Find the verified user by code instead of session
+            $stmt = $conn->prepare("SELECT * FROM temp_users WHERE token = ? AND verified = 1");
+            $stmt->execute([$code]);
+            $tempUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$tempUser)
+                sendResponse(400, 'error', 'Invalid or expired verification code, restart signup');
 
             if ($_SERVER['REQUEST_METHOD'] !== 'POST')
                 sendResponse(405, 'error', 'Method not allowed');
@@ -83,13 +101,6 @@ $password = trim($_POST['password'] ?? '');
             if ($stmt->rowCount() > 0)
                 sendResponse(409, 'error', 'Username already taken');
 
-            $stmt = $conn->prepare("SELECT * FROM temp_users WHERE id = ?");
-            $stmt->execute([$_SESSION['temp_user_id']]);
-            $tempUser = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$tempUser)
-                sendResponse(404, 'error', 'Temporary user not found');
-
             // Finalize Registration
             $conn->beginTransaction();
             $stmt = $conn->prepare("
@@ -101,11 +112,10 @@ $password = trim($_POST['password'] ?? '');
                 $full_name, $role, $phone, $country, $city, $bio
             ]);
 
-            $stmt = $conn->prepare("DELETE FROM temp_users WHERE id = ?");
-            $stmt->execute([$_SESSION['temp_user_id']]);
+            $stmt = $conn->prepare("DELETE FROM temp_users WHERE token = ?");
+            $stmt->execute([$code]);
 
             $conn->commit();
-            unset($_SESSION['temp_user_id']);
 
             sendResponse(200, 'success', 'Signup complete, you can login now');
             break;
