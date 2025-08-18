@@ -1,14 +1,15 @@
 <?php
-/**
+
 $host = '0.0.0.0';
 $dbname = 'giglyte';
 $username = 'root'; 
 $password = 'root'; 
-**/
+/**
 $host = "localhost";
 $dbname = "giglytec_main";
 $username = "giglytec_main";   
-$password = "Database@giglyte.co";       
+$password = "Database@giglyte.co";   
+**/
 error_reporting(0);
 try {
     // Create PDO connection
